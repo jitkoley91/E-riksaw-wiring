@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Rickshaw: Tubular → Li-NMC 48V Replacement</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0b0f0a;
+  --bg2:      #111710;
+  --panel:    #141a12;
+  --border:   #2a3828;
+  --accent:   #7fff00;
+  --accent2:  #ff6b00;
+  --accent3:  #00d4ff;
+  --red:      #ff3333;
+  --blk:      #aabcaa;
+  --grn:      #39d353;
+  --yellow:   #ffe033;
+  --dim:      #3a5038;
+  --ink:      #c8d8c0;
+  --ink2:     #7a9870;
+  --rule:     #1e2e1c;
+  --shadow:   rgba(127,255,0,0.06);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Rajdhani',sans-serif;
+  min-height:100vh;
+}
+
+/* Scan-line texture */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,0.15) 0px,
+    rgba(0,0,0,0.15) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events:none;z-index:0;
+}
+
+/* Grid */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(127,255,0,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(127,255,0,0.03) 1px,transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none;z-index:0;
+}
+
+.wrap{max-width:1160px;margin:0 auto;padding:20px;position:relative;z-index:1;}
+
+/* ── HEADER ── */
+header{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;gap:20px;
+  border:1px solid var(--border);
+  border-bottom:2px solid var(--accent);
+  background:var(--panel);
+  padding:14px 22px;
+  margin-bottom:0;
+  position:relative;
+  overflow:hidden;
+}
+header::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--accent),var(--accent2));
+}
+
+.h-badge{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:3px;
+  color:var(--accent);opacity:0.7;
+  line-height:1.8;
+}
+
+.h-title{text-align:center;}
+.h-title h1{
+  font-family:'Teko',sans-serif;
+  font-size:clamp(18px,3vw,30px);
+  font-weight:600;letter-spacing:2px;
+  color:#fff;text-transform:uppercase;line-height:1;
+}
+.h-title h1 em{color:var(--accent);font-style:normal;}
+.h-title p{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;color:var(--ink2);letter-spacing:2px;margin-top:4px;
+}
+
+.h-specs{text-align:right;}
+.spec-pill{
+  display:inline-block;
+  padding:3px 10px;margin:2px;
+  border:1px solid var(--border);
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:1px;color:var(--accent);
+  background:rgba(127,255,0,0.05);
+}
+
+/* ── TABS ── */
+.tabs{
+  display:flex;border:1px solid var(--border);border-top:none;border-bottom:none;
+  background:var(--bg2);
+}
+.tab{
+  flex:1;padding:10px 6px;
+  font-family:'Teko',sans-serif;font-size:14px;font-weight:500;
+  letter-spacing:1px;text-align:center;cursor:pointer;text-transform:uppercase;
+  border-bottom:2px solid transparent;border-right:1px solid var(--border);
+  color:var(--dim);transition:all 0.2s;
+}
+.tab:last-child{border-right:none;}
+.tab.active{background:var(--panel);color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover:not(.active){background:rgba(127,255,0,0.03);color:var(--ink2);}
+
+/* ── CONTENT ── */
+.content{border:1px solid var(--border);border-top:none;background:var(--panel);padding:24px;display:none;}
+.content.active{display:block;}
+
+.sec{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  letter-spacing:3px;color:var(--accent);text-transform:uppercase;
+  margin-bottom:14px;padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── DIAGRAM ── */
+.diagram-wrap{
+  border:1px solid var(--border);background:#080c06;
+  padding:8px;margin-bottom:18px;
+  box-shadow:0 0 40px var(--shadow);overflow-x:auto;
+}
+svg.sch{display:block;width:100%;height:auto;}
+
+/* ── ALERT BOXES ── */
+.alert{padding:13px 16px;margin-bottom:16px;font-size:13px;line-height:1.7;border-left:3px solid;}
+.alert.danger{border-color:var(--red);background:rgba(255,51,51,0.07);}
+.alert.warn{border-color:var(--accent2);background:rgba(255,107,0,0.07);}
+.alert.info{border-color:var(--accent3);background:rgba(0,212,255,0.05);}
+.alert.ok{border-color:var(--grn);background:rgba(57,211,83,0.06);}
+.alert strong{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;display:block;margin-bottom:6px;}
+.alert.danger strong{color:var(--red);}
+.alert.warn strong{color:var(--accent2);}
+.alert.info strong{color:var(--accent3);}
+.alert.ok strong{color:var(--grn);}
+
+/* ── LEGEND ── */
+.legend{
+  display:flex;flex-wrap:wrap;gap:10px 22px;
+  padding:12px 16px;margin-bottom:18px;
+  background:rgba(127,255,0,0.03);border:1px solid var(--border);
+}
+.leg-item{display:flex;align-items:center;gap:8px;
+  font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ink2);}
+.leg-sw{width:30px;height:3px;border-radius:2px;}
+
+/* ── TABLES ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px;}
+.tbl th{
+  background:#080c06;color:var(--accent);
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  padding:9px 12px;text-align:left;border-bottom:1px solid var(--accent);
+}
+.tbl th.y{color:var(--yellow);}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--rule);color:var(--ink);vertical-align:middle;}
+.tbl tr:nth-child(even) td{background:rgba(127,255,0,0.02);}
+.tbl tr:hover td{background:rgba(127,255,0,0.05);}
+.tbl td:first-child{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--yellow);letter-spacing:1px;white-space:nowrap;}
+
+.badge{display:inline-block;padding:2px 8px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;border:1px solid;}
+.badge.ok{color:#6dff8a;border-color:#2d7d40;background:rgba(57,211,83,0.1);}
+.badge.warn{color:#ffb366;border-color:#994000;background:rgba(255,107,0,0.1);}
+.badge.danger{color:#ff8080;border-color:#992020;background:rgba(255,51,51,0.1);}
+.badge.info{color:#66ddff;border-color:#006688;background:rgba(0,212,255,0.08);}
+.badge.acc{color:var(--accent);border-color:#3a7000;background:rgba(127,255,0,0.08);}
+
+/* ── WIRE DOT ── */
+.wd{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+/* ── STEPS ── */
+.steps{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+.step{
+  display:grid;grid-template-columns:48px 1fr auto;
+  gap:14px;align-items:start;
+  padding:13px 14px;border:1px solid var(--border);
+  background:#0d110b;position:relative;
+}
+.step::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;}
+.step.s-crit::before{background:var(--red);}
+.step.s-warn::before{background:var(--accent2);}
+.step.s-ok::before{background:var(--grn);}
+.step.s-info::before{background:var(--accent3);}
+.step:hover{border-color:var(--dim);}
+
+.sn{font-family:'Teko',sans-serif;font-size:28px;font-weight:600;color:var(--accent);opacity:0.6;line-height:1;padding-top:2px;}
+.sb{flex:1;}
+.st{font-family:'Teko',sans-serif;font-size:16px;font-weight:600;letter-spacing:1px;color:#fff;text-transform:uppercase;margin-bottom:4px;}
+.sd{font-size:13px;color:var(--ink2);line-height:1.6;}
+.stag{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  padding:3px 8px;letter-spacing:1px;align-self:flex-start;white-space:nowrap;border:1px solid;
+}
+.stag.crit{color:#ff8080;border-color:#992020;background:rgba(255,51,51,0.1);}
+.stag.warn{color:#ffb366;border-color:#994000;background:rgba(255,107,0,0.1);}
+.stag.ok{color:#6dff8a;border-color:#2d7d40;background:rgba(57,211,83,0.1);}
+.stag.info{color:#66ddff;border-color:#006688;background:rgba(0,212,255,0.08);}
+
+/* ── FOOTER ── */
+.foot{
+  border:1px solid var(--border);border-top:none;
+  background:var(--bg2);padding:9px 18px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
+}
+.foot span{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:768px){
+  .wrap{padding:10px;}
+  header{grid-template-columns:1fr;text-align:center;padding:12px 14px;gap:10px;}
+  .h-badge{font-size:8px;letter-spacing:2px;}
+  .h-specs{text-align:center;}
+  .h-title h1{font-size:clamp(14px,5vw,22px);letter-spacing:1px;}
+  .h-title p{font-size:9px;letter-spacing:1px;}
+  .spec-pill{font-size:8px;padding:2px 7px;}
+
+  /* Tabs horizontal scroll */
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;min-width:108px;font-size:12px;padding:10px 8px;letter-spacing:0;}
+
+  .content{padding:14px 12px;}
+  .sec{font-size:8px;letter-spacing:2px;}
+  .alert{font-size:12px;padding:10px 12px;}
+  .alert strong{font-size:9px;letter-spacing:1px;}
+
+  /* SVG diagram scrolls horizontally */
+  .diagram-wrap{padding:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .diagram-wrap svg.sch{min-width:680px;width:960px;height:auto;}
+
+  /* Swipe hint */
+  .diagram-hint{
+    display:flex!important;align-items:center;gap:6px;
+    font-family:'Share Tech Mono',monospace;font-size:9px;
+    color:var(--ink2);margin-bottom:6px;letter-spacing:1px;
+    padding:5px 8px;border:1px solid var(--border);
+    background:rgba(127,255,0,0.03);
+  }
+
+  .legend{gap:8px 14px;padding:10px 12px;}
+  .leg-item{font-size:9px;}
+
+  /* Tables → card layout */
+  .tbl{font-size:12px;}
+  .tbl thead{display:none;}
+  .tbl tbody tr{
+    display:block;border:1px solid var(--border);
+    margin-bottom:10px;background:#0d110b;padding:10px;
+  }
+  .tbl tbody td{
+    display:flex;align-items:flex-start;gap:8px;
+    padding:5px 0;border-bottom:1px solid var(--rule);
+    font-size:12px;line-height:1.5;
+  }
+  .tbl tbody td:last-child{border-bottom:none;}
+  .tbl tbody td::before{
+    content:attr(data-label);
+    font-family:'Share Tech Mono',monospace;font-size:8px;
+    letter-spacing:1px;color:var(--accent);min-width:68px;
+    flex-shrink:0;padding-top:2px;text-transform:uppercase;
+  }
+  .tbl td:first-child{
+    font-size:11px;white-space:normal;
+    background:rgba(127,255,0,0.05);
+    margin:-10px -10px 0;padding:7px 10px;
+    border-bottom:1px solid var(--border);display:block;
+  }
+  .tbl td:first-child::before{display:none;}
+
+  /* Steps */
+  .step{grid-template-columns:40px 1fr;gap:10px;padding:11px 12px;}
+  .stag{display:none;}
+  .sn{font-size:24px;}
+  .st{font-size:14px;}
+  .sd{font-size:12px;}
+
+  .foot{flex-direction:column;align-items:flex-start;gap:4px;padding:10px 14px;}
+  .foot span{font-size:8px;letter-spacing:1px;}
+}
+
+@media(max-width:420px){
+  .h-title h1{font-size:14px;}
+  .tab{min-width:90px;font-size:11px;padding:9px 6px;}
+  .diagram-wrap svg.sch{min-width:580px;width:860px;}
+  .tbl tbody td::before{min-width:60px;font-size:7.5px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="h-badge">DWG-ERS-003<br>REV 1.0 · 2026<br>E-RICKSHAW</div>
+  <div class="h-title">
+    <h1>Tubular 48V → <em>Li-NMC 48V</em> Replacement</h1>
+    <p>E-Rickshaw · 4×12V Lead-Acid → 13S Li-NMC · 120Ah Heavy Duty</p>
+  </div>
+  <div class="h-specs">
+    <span class="spec-pill">OLD: 48V 120Ah Tubular</span><br>
+    <span class="spec-pill">NEW: 48V 120Ah Li-NMC</span><br>
+    <span class="spec-pill">BMS: 48V 150A</span><br>
+    <span class="spec-pill">MOTOR: 1000–1500W BLDC</span>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('wiring',this)">⚡ Wiring Diagram</div>
+  <div class="tab" onclick="showTab('bms',this)">🧠 BMS Detail</div>
+  <div class="tab" onclick="showTab('compare',this)">📊 Comparison</div>
+  <div class="tab" onclick="showTab('steps',this)">🔧 Steps</div>
+  <div class="tab" onclick="showTab('schedule',this)">🔌 Wire Schedule</div>
+</div>
+
+<!-- ═══ TAB 1: WIRING DIAGRAM ═══ -->
+<div class="content active" id="tab-wiring">
+  <div class="sec">Complete System Wiring — E-Rickshaw 48V Li-NMC</div>
+
+  <div class="alert danger">
+    <strong>⚠ CRITICAL — READ BEFORE STARTING</strong>
+    48V Li-NMC batteries are DANGEROUS without a BMS. Li-NMC cells can thermal runaway if overcharged (cutoff: 4.2V/cell). Never bypass the BMS. Use only a Li-NMC compatible 54.6V charger. Disconnect negative terminal first when removing old tubular batteries.
+  </div>
+
+  <div class="diagram-hint" style="display:none">Swipe left/right to view full diagram</div>
+  <div class="diagram-wrap">
+  <svg class="sch" viewBox="0 0 1060 640" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="r" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#ff3333"/></marker>
+      <marker id="b" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#aabcaa"/></marker>
+      <marker id="g" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#39d353"/></marker>
+      <marker id="y" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#ffe033"/></marker>
+      <marker id="c" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#00d4ff"/></marker>
+      <marker id="o" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#ff6b00"/></marker>
+      <filter id="gl"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="gl2"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- Background -->
+    <rect x="4" y="4" width="1052" height="632" fill="#080c06" rx="2" stroke="#2a3828" stroke-width="1"/>
+    <!-- Grid lines subtle -->
+    <line x1="4" y1="200" x2="1056" y2="200" stroke="#1a2218" stroke-width="0.5"/>
+    <line x1="4" y1="400" x2="1056" y2="400" stroke="#1a2218" stroke-width="0.5"/>
+    <line x1="300" y1="4" x2="300" y2="636" stroke="#1a2218" stroke-width="0.5"/>
+    <line x1="700" y1="4" x2="700" y2="636" stroke="#1a2218" stroke-width="0.5"/>
+
+    <!-- ══ CHARGER (top-left) ══ -->
+    <rect x="18" y="20" width="155" height="90" rx="3" fill="#0d150a" stroke="#7fff00" stroke-width="1.5" filter="url(#gl)"/>
+    <text x="95" y="42" text-anchor="middle" font-size="9" fill="#7fff00" font-weight="700" font-family="Share Tech Mono,monospace" letter-spacing="1">Li-NMC CHARGER</text>
+    <text x="95" y="57" text-anchor="middle" font-size="10" fill="#c8d8c0" font-family="Rajdhani,sans-serif">54.6V · 10–20A</text>
+    <text x="95" y="71" text-anchor="middle" font-size="8.5" fill="#7a9870" font-family="Share Tech Mono,monospace">CC-CV · No equalize</text>
+    <text x="95" y="85" text-anchor="middle" font-size="8" fill="#ffe033" font-family="Share Tech Mono,monospace">4.2V/cell cutoff</text>
+    <!-- AC plug symbol -->
+    <circle cx="30" cy="100" r="6" fill="none" stroke="#ff3333" stroke-width="1.2"/>
+    <circle cx="28" cy="99" r="1" fill="#ff3333"/>
+    <circle cx="32" cy="99" r="1" fill="#ff3333"/>
+    <text x="40" y="104" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">AC 220V IN</text>
+    <!-- DC out terminals -->
+    <rect x="18" y="108" width="12" height="6" rx="1" fill="#ff3333"/>
+    <rect x="36" y="108" width="12" height="6" rx="1" fill="#aabcaa"/>
+    <text x="24" y="107" text-anchor="middle" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">+</text>
+    <text x="42" y="107" text-anchor="middle" font-size="8" fill="#aabcaa" font-family="Share Tech Mono,monospace">−</text>
+    <text x="115" y="118" font-size="8" fill="#7a9870" font-family="Share Tech Mono,monospace">DC OUT →</text>
+
+    <!-- ══ BMS (center-top) ══ -->
+    <rect x="360" y="20" width="220" height="115" rx="3" fill="#0a1208" stroke="#ffe033" stroke-width="2" filter="url(#gl)"/>
+    <text x="470" y="42" text-anchor="middle" font-size="10" fill="#ffe033" font-weight="700" font-family="Share Tech Mono,monospace" letter-spacing="2">BMS · 48V 150A</text>
+    <text x="470" y="57" text-anchor="middle" font-size="8.5" fill="#ffe033" font-family="Share Tech Mono,monospace">BATTERY MANAGEMENT SYSTEM</text>
+    <!-- BMS internal boxes -->
+    <rect x="368" y="63" width="60" height="24" rx="1" fill="#0d1a0a" stroke="#2a3828" stroke-width="1"/>
+    <text x="398" y="74" text-anchor="middle" font-size="7" fill="#00d4ff" font-family="Share Tech Mono,monospace">CELL MON</text>
+    <text x="398" y="83" text-anchor="middle" font-size="6.5" fill="#7a9870" font-family="Share Tech Mono,monospace">13-ch sense</text>
+    <rect x="436" y="63" width="60" height="24" rx="1" fill="#0d1a0a" stroke="#2a3828" stroke-width="1"/>
+    <text x="466" y="74" text-anchor="middle" font-size="7" fill="#00d4ff" font-family="Share Tech Mono,monospace">MOSFET</text>
+    <text x="466" y="83" text-anchor="middle" font-size="6.5" fill="#7a9870" font-family="Share Tech Mono,monospace">CHG/DSG</text>
+    <rect x="504" y="63" width="68" height="24" rx="1" fill="#0d1a0a" stroke="#2a3828" stroke-width="1"/>
+    <text x="538" y="74" text-anchor="middle" font-size="7" fill="#00d4ff" font-family="Share Tech Mono,monospace">PROTECT</text>
+    <text x="538" y="83" text-anchor="middle" font-size="6.5" fill="#7a9870" font-family="Share Tech Mono,monospace">OV/UV/OC/SC</text>
+    <!-- BMS thresholds -->
+    <text x="368" y="104" font-size="7" fill="#7a9870" font-family="Share Tech Mono,monospace">OVP:4.25V · UVP:2.8V · OCP:180A · OTP:65°C</text>
+    <!-- BMS port labels -->
+    <text x="368" y="130" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">B+</text>
+    <text x="392" y="130" font-size="8" fill="#aabcaa" font-family="Share Tech Mono,monospace">B−</text>
+    <text x="500" y="130" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">P+</text>
+    <text x="524" y="130" font-size="8" fill="#aabcaa" font-family="Share Tech Mono,monospace">P−</text>
+    <text x="430" y="130" font-size="8" fill="#ffe033" font-family="Share Tech Mono,monospace">SENSE</text>
+
+    <!-- Charger DC+ → BMS B+ -->
+    <line x1="173" y1="50" x2="340" y2="50" stroke="#ff3333" stroke-width="2.5"/>
+    <line x1="340" y1="50" x2="380" y2="50" stroke="#ff3333" stroke-width="2.5" marker-end="url(#r)"/>
+    <text x="256" y="45" text-anchor="middle" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">DC+ CHG (Red 10mm²)</text>
+
+    <!-- Charger DC− → BMS B− -->
+    <line x1="173" y1="70" x2="330" y2="70" stroke="#aabcaa" stroke-width="2.5"/>
+    <line x1="330" y1="70" x2="403" y2="70" stroke="#aabcaa" stroke-width="2.5" marker-end="url(#b)"/>
+    <text x="256" y="65" text-anchor="middle" font-size="8" fill="#aabcaa" font-family="Share Tech Mono,monospace">DC− (Black 10mm²)</text>
+
+    <!-- ══ Li-NMC CELL PACK (center) ══ -->
+    <rect x="310" y="195" width="320" height="175" rx="4" fill="#080e06" stroke="#00d4ff" stroke-width="1.5"/>
+    <text x="470" y="218" text-anchor="middle" font-size="9.5" fill="#00d4ff" font-weight="700" font-family="Share Tech Mono,monospace">Li-NMC CELL PACK</text>
+    <text x="470" y="233" text-anchor="middle" font-size="8.5" fill="#7a9870" font-family="Share Tech Mono,monospace">13S4P · 48.1V nominal · 120Ah</text>
+
+    <!-- Cell rows — 13 cells in series shown as stack -->
+    <!-- Row of prismatic cells -->
+    <g transform="translate(322,242)">
+      <!-- 13 cells in a 2-row layout: 7 top + 6 bottom -->
+      <!-- Top row: S1–S7 -->
+      <rect x="0"   y="0" width="20" height="44" rx="2" fill="#0d1a08" stroke="#2a3828" stroke-width="1"/>
+      <rect x="22"  y="0" width="20" height="44" rx="2" fill="#0f1e0a" stroke="#2a3828" stroke-width="1"/>
+      <rect x="44"  y="0" width="20" height="44" rx="2" fill="#0d1a08" stroke="#2a3828" stroke-width="1"/>
+      <rect x="66"  y="0" width="20" height="44" rx="2" fill="#0f1e0a" stroke="#2a3828" stroke-width="1"/>
+      <rect x="88"  y="0" width="20" height="44" rx="2" fill="#0d1a08" stroke="#2a3828" stroke-width="1"/>
+      <rect x="110" y="0" width="20" height="44" rx="2" fill="#0f1e0a" stroke="#2a3828" stroke-width="1"/>
+      <rect x="132" y="0" width="20" height="44" rx="2" fill="#0d1a08" stroke="#2a3828" stroke-width="1"/>
+      <!-- Cell labels top -->
+      <text x="10"  y="25" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S1</text>
+      <text x="32"  y="25" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S2</text>
+      <text x="54"  y="25" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S3</text>
+      <text x="76"  y="25" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S4</text>
+      <text x="98"  y="25" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S5</text>
+      <text x="120" y="25" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S6</text>
+      <text x="142" y="25" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S7</text>
+      <!-- Series busbars top -->
+      <line x1="10" y1="-2" x2="22" y2="-2" stroke="#c8d8c0" stroke-width="1.5"/>
+      <line x1="32" y1="-2" x2="44" y2="-2" stroke="#c8d8c0" stroke-width="1.5"/>
+      <line x1="54" y1="-2" x2="66" y2="-2" stroke="#c8d8c0" stroke-width="1.5"/>
+      <line x1="76" y1="-2" x2="88" y2="-2" stroke="#c8d8c0" stroke-width="1.5"/>
+      <line x1="98" y1="-2" x2="110" y2="-2" stroke="#c8d8c0" stroke-width="1.5"/>
+      <line x1="120" y1="-2" x2="132" y2="-2" stroke="#c8d8c0" stroke-width="1.5"/>
+      <!-- Bottom row: S8–S13 -->
+      <rect x="11"  y="56" width="20" height="44" rx="2" fill="#0d1a08" stroke="#2a3828" stroke-width="1"/>
+      <rect x="33"  y="56" width="20" height="44" rx="2" fill="#0f1e0a" stroke="#2a3828" stroke-width="1"/>
+      <rect x="55"  y="56" width="20" height="44" rx="2" fill="#0d1a08" stroke="#2a3828" stroke-width="1"/>
+      <rect x="77"  y="56" width="20" height="44" rx="2" fill="#0f1e0a" stroke="#2a3828" stroke-width="1"/>
+      <rect x="99"  y="56" width="20" height="44" rx="2" fill="#0d1a08" stroke="#2a3828" stroke-width="1"/>
+      <rect x="121" y="56" width="20" height="44" rx="2" fill="#0f1e0a" stroke="#2a3828" stroke-width="1"/>
+      <text x="21"  y="81" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S8</text>
+      <text x="43"  y="81" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S9</text>
+      <text x="65"  y="81" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S10</text>
+      <text x="87"  y="81" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S11</text>
+      <text x="109" y="81" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S12</text>
+      <text x="131" y="81" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="Share Tech Mono,monospace">S13</text>
+      <!-- Row-to-row link -->
+      <line x1="152" y1="22" x2="162" y2="22" stroke="#c8d8c0" stroke-width="1.5"/>
+      <line x1="162" y1="22" x2="162" y2="78" stroke="#c8d8c0" stroke-width="1.5"/>
+      <line x1="162" y1="78" x2="141" y2="78" stroke="#c8d8c0" stroke-width="1.5"/>
+      <!-- Pack terminals -->
+      <rect x="0"   y="42" width="10" height="6" rx="1" fill="#ff3333"/>
+      <rect x="131" y="100" width="10" height="6" rx="1" fill="#aabcaa"/>
+      <text x="5"   y="55" text-anchor="middle" font-size="7" fill="#ff3333" font-family="Share Tech Mono,monospace">P+</text>
+      <text x="136" y="114" text-anchor="middle" font-size="7" fill="#aabcaa" font-family="Share Tech Mono,monospace">P−</text>
+    </g>
+    <!-- Pack info -->
+    <text x="470" y="356" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">3.7V/cell nom · 4.2V max · 2.8V cutoff</text>
+    <text x="470" y="368" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">13S = 48.1V nom · 54.6V full · 36.4V cutoff</text>
+
+    <!-- BMS → Pack B+ wire -->
+    <line x1="380" y1="135" x2="380" y2="175" stroke="#ff3333" stroke-width="2.5"/>
+    <line x1="380" y1="175" x2="355" y2="175" stroke="#ff3333" stroke-width="2.5"/>
+    <line x1="355" y1="175" x2="355" y2="195" stroke="#ff3333" stroke-width="2.5" marker-end="url(#r)"/>
+    <text x="367" y="170" text-anchor="middle" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">B+</text>
+
+    <!-- BMS → Pack B− wire -->
+    <line x1="403" y1="135" x2="403" y2="185" stroke="#aabcaa" stroke-width="2.5"/>
+    <line x1="403" y1="185" x2="592" y2="185" stroke="#aabcaa" stroke-width="2.5"/>
+    <line x1="592" y1="185" x2="592" y2="195" stroke="#aabcaa" stroke-width="2.5" marker-end="url(#b)"/>
+    <text x="498" y="181" text-anchor="middle" font-size="8" fill="#aabcaa" font-family="Share Tech Mono,monospace">B− (Black 25mm²)</text>
+
+    <!-- Cell sense ribbon (BMS to cells) -->
+    <line x1="450" y1="135" x2="450" y2="175" stroke="#ffe033" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="450" y1="175" x2="470" y2="175" stroke="#ffe033" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="470" y1="175" x2="470" y2="195" stroke="#ffe033" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#y)"/>
+    <text x="480" y="168" font-size="7.5" fill="#ffe033" font-family="Share Tech Mono,monospace">14-wire sense</text>
+
+    <!-- ══ ANL FUSE ══ -->
+    <rect x="740" y="100" width="120" height="55" rx="3" fill="#0e1800" stroke="#ffe033" stroke-width="1.5"/>
+    <text x="800" y="120" text-anchor="middle" font-size="9" fill="#ffe033" font-weight="700" font-family="Share Tech Mono,monospace">ANL FUSE</text>
+    <text x="800" y="134" text-anchor="middle" font-size="8.5" fill="#c8d8c0" font-family="Share Tech Mono,monospace">150A · 60V DC</text>
+    <text x="800" y="148" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">≤ 30cm from BMS P+</text>
+    <!-- Fuse symbol -->
+    <line x1="748" y1="142" x2="760" y2="142" stroke="#ffe033" stroke-width="1.5"/>
+    <rect x="760" y="138" width="16" height="8" fill="none" stroke="#ffe033" stroke-width="1.5"/>
+    <line x1="776" y1="142" x2="792" y2="142" stroke="#ffe033" stroke-width="1.5"/>
+
+    <!-- BMS P+ → ANL Fuse -->
+    <line x1="510" y1="78" x2="700" y2="78" stroke="#ff3333" stroke-width="2.5"/>
+    <line x1="700" y1="78" x2="740" y2="128" stroke="#ff3333" stroke-width="2.5" marker-end="url(#r)"/>
+    <text x="605" y="73" text-anchor="middle" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">P+ OUT → Red 35mm²</text>
+
+    <!-- BMS P− → Neg bus -->
+    <rect x="740" y="175" width="120" height="40" rx="2" fill="#0d1510" stroke="#aabcaa" stroke-width="1"/>
+    <text x="800" y="193" text-anchor="middle" font-size="8.5" fill="#aabcaa" font-weight="700" font-family="Share Tech Mono,monospace">−VE BUS BAR</text>
+    <text x="800" y="208" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">Common Negative</text>
+    <line x1="535" y1="95" x2="720" y2="95" stroke="#aabcaa" stroke-width="2.5"/>
+    <line x1="720" y1="95" x2="740" y2="195" stroke="#aabcaa" stroke-width="2.5" marker-end="url(#b)"/>
+    <text x="630" y="91" text-anchor="middle" font-size="8" fill="#aabcaa" font-family="Share Tech Mono,monospace">P− OUT → Black 35mm²</text>
+
+    <!-- ══ CONTROLLER / BLDC DRIVER ══ -->
+    <rect x="740" y="250" width="165" height="95" rx="3" fill="#081410" stroke="#39d353" stroke-width="1.5"/>
+    <text x="822" y="272" text-anchor="middle" font-size="9" fill="#39d353" font-weight="700" font-family="Share Tech Mono,monospace">MOTOR CONTROLLER</text>
+    <text x="822" y="287" text-anchor="middle" font-size="8.5" fill="#c8d8c0" font-family="Share Tech Mono,monospace">48V · 40–60A BLDC</text>
+    <text x="822" y="301" text-anchor="middle" font-size="8" fill="#7a9870" font-family="Share Tech Mono,monospace">FOC / Trapezoidal</text>
+    <text x="822" y="315" text-anchor="middle" font-size="8" fill="#7a9870" font-family="Share Tech Mono,monospace">Low V cutoff: 39V</text>
+    <text x="822" y="329" text-anchor="middle" font-size="8" fill="#ffe033" font-family="Share Tech Mono,monospace">Regen braking capable</text>
+    <text x="822" y="340" text-anchor="middle" font-size="7.5" fill="#39d353" font-family="Share Tech Mono,monospace">3-phase PWM output</text>
+
+    <!-- Fuse → Controller + -->
+    <line x1="860" y1="155" x2="860" y2="250" stroke="#ff3333" stroke-width="2.5" marker-end="url(#r)"/>
+    <text x="867" y="205" font-size="8" fill="#ff3333" font-family="Share Tech Mono,monospace">+48V</text>
+
+    <!-- Neg Bus → Controller − -->
+    <line x1="860" y1="215" x2="880" y2="215" stroke="#aabcaa" stroke-width="2"/>
+    <line x1="880" y1="215" x2="880" y2="250" stroke="#aabcaa" stroke-width="2" marker-end="url(#b)"/>
+    <text x="887" y="235" font-size="8" fill="#aabcaa" font-family="Share Tech Mono,monospace">GND</text>
+
+    <!-- ══ BLDC MOTOR ══ -->
+    <ellipse cx="960" cy="297" rx="52" ry="52" fill="#080c04" stroke="#39d353" stroke-width="1.5"/>
+    <text x="960" y="282" text-anchor="middle" font-size="9" fill="#39d353" font-weight="700" font-family="Share Tech Mono,monospace">BLDC</text>
+    <text x="960" y="296" text-anchor="middle" font-size="8.5" fill="#c8d8c0" font-family="Share Tech Mono,monospace">MOTOR</text>
+    <text x="960" y="310" text-anchor="middle" font-size="8" fill="#7a9870" font-family="Share Tech Mono,monospace">1000–1500W</text>
+    <text x="960" y="323" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">Hub / Axle</text>
+    <!-- Motor rotation arrow -->
+    <path d="M940 270 Q920 250 930 235" stroke="#39d353" stroke-width="1.5" fill="none" marker-end="url(#g)"/>
+
+    <!-- Controller → Motor 3-phase -->
+    <line x1="905" y1="285" x2="908" y2="285" stroke="#ff3333" stroke-width="2" marker-end="url(#r)"/>
+    <line x1="905" y1="297" x2="908" y2="297" stroke="#39d353" stroke-width="2" marker-end="url(#g)"/>
+    <line x1="905" y1="309" x2="908" y2="309" stroke="#aabcaa" stroke-width="2" marker-end="url(#b)"/>
+    <text x="906" y="278" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">U</text>
+    <text x="906" y="293" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">V</text>
+    <text x="906" y="308" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">W</text>
+    <text x="920" y="273" font-size="7.5" fill="#39d353" font-family="Share Tech Mono,monospace">3-Phase AC</text>
+
+    <!-- ══ THROTTLE / HALL ══ -->
+    <rect x="740" y="370" width="165" height="55" rx="3" fill="#090e08" stroke="#00d4ff" stroke-width="1"/>
+    <text x="822" y="390" text-anchor="middle" font-size="8.5" fill="#00d4ff" font-weight="700" font-family="Share Tech Mono,monospace">THROTTLE / HALL</text>
+    <text x="822" y="404" text-anchor="middle" font-size="8" fill="#7a9870" font-family="Share Tech Mono,monospace">5V signal · 3-wire Hall</text>
+    <text x="822" y="416" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">Speed signal → Controller</text>
+    <!-- Throttle to controller -->
+    <line x1="822" y1="370" x2="822" y2="345" stroke="#00d4ff" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#c)"/>
+
+    <!-- ══ DC-DC 48V→12V ══ -->
+    <rect x="310" y="420" width="160" height="65" rx="3" fill="#0a1208" stroke="#ff6b00" stroke-width="1.5"/>
+    <text x="390" y="441" text-anchor="middle" font-size="9" fill="#ff6b00" font-weight="700" font-family="Share Tech Mono,monospace">DC-DC CONVERTER</text>
+    <text x="390" y="456" text-anchor="middle" font-size="8.5" fill="#c8d8c0" font-family="Share Tech Mono,monospace">48V → 12V · 10A</text>
+    <text x="390" y="470" text-anchor="middle" font-size="8" fill="#7a9870" font-family="Share Tech Mono,monospace">Lights · Horn · Displays</text>
+    <text x="390" y="482" text-anchor="middle" font-size="7.5" fill="#ff6b00" font-family="Share Tech Mono,monospace">120W isolated</text>
+    <!-- Pack to DC-DC -->
+    <line x1="390" y1="390" x2="390" y2="420" stroke="#ff6b00" stroke-width="1.5" marker-end="url(#o)"/>
+    <text x="398" y="410" font-size="7.5" fill="#ff6b00" font-family="Share Tech Mono,monospace">48V IN</text>
+
+    <!-- ══ SOC DISPLAY ══ -->
+    <rect x="140" y="195" width="130" height="70" rx="3" fill="#080e06" stroke="#7fff00" stroke-width="1"/>
+    <text x="205" y="218" text-anchor="middle" font-size="8.5" fill="#7fff00" font-weight="700" font-family="Share Tech Mono,monospace">SOC DISPLAY</text>
+    <text x="205" y="233" text-anchor="middle" font-size="8" fill="#c8d8c0" font-family="Share Tech Mono,monospace">BMS Monitor</text>
+    <text x="205" y="248" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">Volt · Temp · Fault</text>
+    <text x="205" y="260" text-anchor="middle" font-size="7.5" fill="#7fff00" font-family="Share Tech Mono,monospace">UART / CAN bus</text>
+    <!-- BMS → Display comm -->
+    <line x1="360" y1="230" x2="270" y2="230" stroke="#7fff00" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#c)"/>
+    <text x="315" y="226" text-anchor="middle" font-size="7.5" fill="#7fff00" font-family="Share Tech Mono,monospace">COMM</text>
+
+    <!-- ══ NTC TEMP SENSOR ══ -->
+    <rect x="140" y="295" width="130" height="50" rx="2" fill="#080c04" stroke="#ff6b00" stroke-width="1"/>
+    <text x="205" y="315" text-anchor="middle" font-size="8" fill="#ff6b00" font-weight="700" font-family="Share Tech Mono,monospace">NTC TEMP SENSORS</text>
+    <text x="205" y="329" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">10kΩ × 3 on cells</text>
+    <text x="205" y="341" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">to BMS T1/T2/T3</text>
+    <line x1="270" y1="315" x2="310" y2="315" stroke="#ff6b00" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="310" y1="315" x2="310" y2="280" stroke="#ff6b00" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="310" y1="280" x2="360" y2="78" stroke="#ff6b00" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#o)"/>
+    <text x="288" y="307" font-size="7" fill="#ff6b00" font-family="Share Tech Mono,monospace">Temp signal</text>
+
+    <!-- ══ EARTH / CHASSIS ══ -->
+    <rect x="18" y="420" width="140" height="50" rx="2" fill="#06100a" stroke="#39d353" stroke-width="1.5"/>
+    <text x="88" y="441" text-anchor="middle" font-size="8.5" fill="#39d353" font-weight="700" font-family="Share Tech Mono,monospace">CHASSIS EARTH</text>
+    <text x="88" y="456" text-anchor="middle" font-size="8" fill="#7a9870" font-family="Share Tech Mono,monospace">Rickshaw Frame</text>
+    <text x="88" y="468" text-anchor="middle" font-size="7.5" fill="#7a9870" font-family="Share Tech Mono,monospace">Green/Yellow 6mm²</text>
+    <!-- Earth connections -->
+    <line x1="158" y1="450" x2="310" y2="450" stroke="#39d353" stroke-width="1.5" stroke-dasharray="7,4"/>
+    <line x1="310" y1="450" x2="360" y2="450" stroke="#39d353" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#g)"/>
+    <line x1="158" y1="440" x2="500" y2="440" stroke="#39d353" stroke-width="1" stroke-dasharray="5,4"/>
+    <line x1="500" y1="440" x2="740" y2="230" stroke="#39d353" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#g)"/>
+
+    <!-- ══ NODE DOTS ══ -->
+    <circle cx="380" cy="50" r="3.5" fill="#ff3333" filter="url(#gl)"/>
+    <circle cx="403" cy="70" r="3.5" fill="#aabcaa"/>
+    <circle cx="860" cy="155" r="3.5" fill="#ff3333" filter="url(#gl)"/>
+    <circle cx="860" cy="215" r="3.5" fill="#aabcaa"/>
+
+    <!-- ══ TITLE BLOCK ══ -->
+    <rect x="4" y="598" width="1052" height="38" fill="#060a04" stroke="#2a3828" stroke-width="1"/>
+    <line x1="260" y1="598" x2="260" y2="636" stroke="#2a3828" stroke-width="1"/>
+    <line x1="630" y1="598" x2="630" y2="636" stroke="#2a3828" stroke-width="1"/>
+    <line x1="820" y1="598" x2="820" y2="636" stroke="#2a3828" stroke-width="1"/>
+    <text x="130" y="613" text-anchor="middle" font-size="7.5" fill="#3a5038" font-family="Share Tech Mono,monospace" letter-spacing="1">VEHICLE</text>
+    <text x="130" y="628" text-anchor="middle" font-size="9" fill="#7a9870" font-weight="700" font-family="Share Tech Mono,monospace">E-RICKSHAW · 48V</text>
+    <text x="445" y="613" text-anchor="middle" font-size="7.5" fill="#3a5038" font-family="Share Tech Mono,monospace" letter-spacing="1">DESCRIPTION</text>
+    <text x="445" y="628" text-anchor="middle" font-size="9" fill="#7fff00" font-weight="700" font-family="Share Tech Mono,monospace">TUBULAR → Li-NMC 48V 120Ah REPLACEMENT</text>
+    <text x="725" y="613" text-anchor="middle" font-size="7.5" fill="#3a5038" font-family="Share Tech Mono,monospace" letter-spacing="1">DWG NO.</text>
+    <text x="725" y="628" text-anchor="middle" font-size="9" fill="#7a9870" font-family="Share Tech Mono,monospace">DWG-ERS-003</text>
+    <text x="936" y="613" text-anchor="middle" font-size="7.5" fill="#3a5038" font-family="Share Tech Mono,monospace" letter-spacing="1">SCALE / REV</text>
+    <text x="936" y="628" text-anchor="middle" font-size="9" fill="#7a9870" font-family="Share Tech Mono,monospace">NTS / REV 1.0</text>
+  </svg>
+  </div>
+
+  <!-- Wire Legend -->
+  <div class="legend">
+    <div class="leg-item"><div class="leg-sw" style="background:#ff3333"></div>RED — DC Positive 48V (B+/P+)</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#aabcaa"></div>BLACK/GREY — DC Negative (B−/P−)</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#39d353"></div>GREEN — Chassis Earth / PE</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#ffe033"></div>YELLOW — Cell Sense Ribbon (BMS)</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#ff6b00"></div>ORANGE — NTC Temp / DC-DC</div>
+    <div class="leg-item"><div class="leg-sw" style="background:#00d4ff; border:1px dashed #00d4ff"></div>CYAN DASH — CAN/UART Comms</div>
+  </div>
+
+  <div class="alert info">
+    <strong>📋 SYSTEM ARCHITECTURE</strong>
+    13S4P Li-NMC pack: 13 cells in series = 48.1V nominal / 54.6V full charge / 36.4V cutoff. 4P = 4 cells in parallel per group = 120Ah total. BMS sits between pack and all loads — B+/B− connect to cells, P+/P− connect to controller and charger. DC-DC converter steps 48V down to 12V for lights, horn, indicators.
+  </div>
+</div>
+
+<!-- ═══ TAB 2: BMS DETAIL ═══ -->
+<div class="content" id="tab-bms">
+  <div class="sec">BMS Wiring — 48V 150A Li-NMC Protection</div>
+
+  <div class="alert danger">
+    <strong>⚠ Li-NMC SPECIFIC DANGER</strong>
+    Li-NMC cells are more energetically dense than LFP and have a narrower safe voltage window (2.8V–4.2V per cell). Overcharge beyond 4.25V/cell causes thermal runaway. The BMS must NEVER be bypassed or shorted. Use a BMS rated for at minimum 1.5× the controller's peak current.
+  </div>
+
+  <table class="tbl">
+    <thead><tr><th class="y">PROTECTION</th><th>TRIGGER</th><th>THRESHOLD (48V / 13S NMC)</th><th>ACTION</th></tr></thead>
+    <tbody>
+      <tr><td>OVER VOLTAGE (OVP)</td><td data-label="Trigger">Any cell exceeds max charge</td><td data-label="Threshold">4.25V/cell → 55.25V pack</td><td data-label="Action"><span class="badge danger">Cut CHG MOSFET instantly</span></td></tr>
+      <tr><td>UNDER VOLTAGE (UVP)</td><td data-label="Trigger">Any cell drops below safe min</td><td data-label="Threshold">2.80V/cell → 36.4V pack</td><td data-label="Action"><span class="badge danger">Cut DSG MOSFET — motor stop</span></td></tr>
+      <tr><td>OVER CURRENT CHG</td><td data-label="Trigger">Charge current exceeds limit</td><td data-label="Threshold">≥ 160A (1.07× rated)</td><td data-label="Action"><span class="badge warn">Suspend charging</span></td></tr>
+      <tr><td>OVER CURRENT DSG</td><td data-label="Trigger">Discharge / motor peak overload</td><td data-label="Threshold">≥ 200A instantaneous</td><td data-label="Action"><span class="badge warn">Suspend discharge briefly</span></td></tr>
+      <tr><td>SHORT CIRCUIT (SCP)</td><td data-label="Trigger">Direct short at terminals</td><td data-label="Threshold">&gt;500A · response &lt;1ms</td><td data-label="Action"><span class="badge danger">Immediate full cutoff</span></td></tr>
+      <tr><td>OVER TEMP (OTP)</td><td data-label="Trigger">Cell surface too hot</td><td data-label="Threshold">65°C cells · 85°C MOSFET</td><td data-label="Action"><span class="badge warn">Suspend charge/discharge</span></td></tr>
+      <tr><td>UNDER TEMP (UTP)</td><td data-label="Trigger">Too cold to charge safely</td><td data-label="Threshold">0°C — NMC cannot charge below 0°C</td><td data-label="Action"><span class="badge warn">Disable CHG only · DSG OK</span></td></tr>
+      <tr><td>CELL BALANCING</td><td data-label="Trigger">Voltage spread between cells</td><td data-label="Threshold">ΔV &gt;15mV triggers bleed resistor</td><td data-label="Action"><span class="badge info">Passive balance — bleed resistor</span></td></tr>
+      <tr><td>REGEN PROTECTION</td><td data-label="Trigger">Regenerative braking overcharge</td><td data-label="Threshold">If pack full (54.6V), disable regen</td><td data-label="Action"><span class="badge info">Controller regen cutoff signal</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec">BMS Port Connections</div>
+  <table class="tbl">
+    <thead><tr><th class="y">BMS PORT</th><th>CONNECTS TO</th><th>WIRE</th><th>PURPOSE</th></tr></thead>
+    <tbody>
+      <tr><td>B+</td><td data-label="Connects To">Li-NMC Pack Positive terminal</td><td data-label="Wire">Red 25mm²</td><td data-label="Purpose">Battery side positive — raw cell voltage</td></tr>
+      <tr><td>B−</td><td data-label="Connects To">Li-NMC Pack Negative terminal</td><td data-label="Wire">Black 25mm²</td><td data-label="Purpose">Battery side negative — raw cell ground</td></tr>
+      <tr><td>P+</td><td data-label="Connects To">ANL Fuse → Motor Controller DC+</td><td data-label="Wire">Red 35mm²</td><td data-label="Purpose">Protected positive output to all loads</td></tr>
+      <tr><td>P−</td><td data-label="Connects To">Negative Bus Bar → Controller DC−</td><td data-label="Wire">Black 35mm²</td><td data-label="Purpose">Protected negative output to all loads</td></tr>
+      <tr><td>C+ / C−</td><td data-label="Connects To">Charger DC output +/−</td><td data-label="Wire">Red/Black 10mm²</td><td data-label="Purpose">Dedicated charge input port (some BMS)</td></tr>
+      <tr><td>S0–S13</td><td data-label="Connects To">Each cell junction (14 wires)</td><td data-label="Wire">Yellow 0.5mm² ribbon</td><td data-label="Purpose">Individual cell voltage sense taps</td></tr>
+      <tr><td>T1 / T2 / T3</td><td data-label="Connects To">NTC sensors on cell surface</td><td data-label="Wire">Orange 0.5mm²</td><td data-label="Purpose">Cell temperature monitoring</td></tr>
+      <tr><td>CAN / UART</td><td data-label="Connects To">SOC display / dashboard</td><td data-label="Wire">Teal 0.5mm²</td><td data-label="Purpose">SOC%, voltage, fault codes to display</td></tr>
+      <tr><td>CHASSIS</td><td data-label="Connects To">Rickshaw frame earth point</td><td data-label="Wire">Green/Yellow 6mm²</td><td data-label="Purpose">BMS enclosure bonding to earth</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══ TAB 3: COMPARISON ═══ -->
+<div class="content" id="tab-compare">
+  <div class="sec">4×12V Tubular vs 48V 13S Li-NMC · E-Rickshaw Comparison</div>
+
+  <table class="tbl">
+    <thead><tr><th class="y">PARAMETER</th><th>TUBULAR LEAD-ACID (OLD)</th><th>Li-NMC 48V 120Ah (NEW)</th><th>IMPACT</th></tr></thead>
+    <tbody>
+      <tr><td>CONFIGURATION</td><td data-label="Tubular (Old)">4 × 12V 120Ah in series</td><td data-label="Li-NMC (New)">13S4P Li-NMC cells</td><td data-label="Impact"><span class="badge info">New pack, same voltage</span></td></tr>
+      <tr><td>NOMINAL VOLTAGE</td><td data-label="Tubular (Old)">48V (12V × 4)</td><td data-label="Li-NMC (New)">48.1V (3.7V × 13)</td><td data-label="Impact"><span class="badge ok">Directly compatible</span></td></tr>
+      <tr><td>FULL CHARGE VOLTAGE</td><td data-label="Tubular (Old)">56–58V (14–14.5V/unit)</td><td data-label="Li-NMC (New)">54.6V (4.2V × 13)</td><td data-label="Impact"><span class="badge warn">New charger needed</span></td></tr>
+      <tr><td>DISCHARGE CUTOFF</td><td data-label="Tubular (Old)">~42V (10.5V/unit)</td><td data-label="Li-NMC (New)">36.4V (2.8V × 13)</td><td data-label="Impact"><span class="badge warn">Controller cutoff: set 39V</span></td></tr>
+      <tr><td>USABLE CAPACITY</td><td data-label="Tubular (Old)">~60Ah (50% DoD)</td><td data-label="Li-NMC (New)">114Ah (95% DoD)</td><td data-label="Impact"><span class="badge acc">~90% more range</span></td></tr>
+      <tr><td>WEIGHT</td><td data-label="Tubular (Old)">~55–65 kg total</td><td data-label="Li-NMC (New)">~18–22 kg</td><td data-label="Impact"><span class="badge acc">~65% lighter</span></td></tr>
+      <tr><td>CHARGE TIME</td><td data-label="Tubular (Old)">8–10 hours (10A)</td><td data-label="Li-NMC (New)">3–4 hours (20A)</td><td data-label="Impact"><span class="badge ok">Faster charging</span></td></tr>
+      <tr><td>CHARGER REQUIRED</td><td data-label="Tubular (Old)">48V Lead-Acid charger</td><td data-label="Li-NMC (New)">54.6V Li-NMC CC-CV charger</td><td data-label="Impact"><span class="badge danger">Must replace charger</span></td></tr>
+      <tr><td>BMS REQUIRED</td><td data-label="Tubular (Old)">No</td><td data-label="Li-NMC (New)">Yes — 48V 150A mandatory</td><td data-label="Impact"><span class="badge danger">Must install BMS</span></td></tr>
+      <tr><td>CYCLE LIFE</td><td data-label="Tubular (Old)">300–600 cycles (tubular)</td><td data-label="Li-NMC (New)">800–1500 cycles (NMC)</td><td data-label="Impact"><span class="badge ok">2–3× longer life</span></td></tr>
+      <tr><td>MAINTENANCE</td><td data-label="Tubular (Old)">Monthly water top-up</td><td data-label="Li-NMC (New)">Zero maintenance</td><td data-label="Impact"><span class="badge ok">Eliminated</span></td></tr>
+      <tr><td>REGEN BRAKING</td><td data-label="Tubular (Old)">Limited support</td><td data-label="Li-NMC (New)">Supports regen — BMS manages</td><td data-label="Impact"><span class="badge acc">Extra range from regen</span></td></tr>
+      <tr><td>TEMPERATURE (charging)</td><td data-label="Tubular (Old)">5°C – 45°C</td><td data-label="Li-NMC (New)">0°C – 45°C (NMC)</td><td data-label="Impact"><span class="badge ok">Similar</span></td></tr>
+      <tr><td>UPFRONT COST</td><td data-label="Tubular (Old)">Low (₹8,000–12,000)</td><td data-label="Li-NMC (New)">High (₹25,000–40,000)</td><td data-label="Impact"><span class="badge warn">3–4× higher upfront</span></td></tr>
+      <tr><td>ENERGY COST / KM</td><td data-label="Tubular (Old)">Higher (efficiency loss)</td><td data-label="Li-NMC (New)">Lower (higher round-trip eff.)</td><td data-label="Impact"><span class="badge ok">Lower running cost</span></td></tr>
+      <tr><td>PAYLOAD BENEFIT</td><td data-label="Tubular (Old)">Heavy — reduces payload</td><td data-label="Li-NMC (New)">Light — more payload capacity</td><td data-label="Impact"><span class="badge acc">More passengers/goods</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert ok">
+    <strong>✅ E-RICKSHAW SPECIFIC ADVANTAGE</strong>
+    The ~40kg weight reduction significantly improves range per charge and reduces motor load. At typical e-rickshaw usage of 60–80 km/day, Li-NMC's 95% DoD vs tubular's 50% DoD effectively doubles the usable range from a same-Ah pack. Regen braking on downhill/braking can recover 5–10% additional energy.
+  </div>
+</div>
+
+<!-- ═══ TAB 4: STEPS ═══ -->
+<div class="content" id="tab-steps">
+  <div class="sec">Replacement Procedure — 4×12V Tubular → 48V Li-NMC</div>
+
+  <div class="alert danger">
+    <strong>⚠ BEFORE YOU START</strong>
+    Switch OFF the e-rickshaw key/ignition. Remove the key. Engage parking brake. Disconnect the motor controller first — before touching any battery terminals. 48V can cause fatal electric shock — never work alone. Tubular batteries contain dilute sulfuric acid — wear gloves and goggles.
+  </div>
+
+  <div class="steps">
+    <div class="step s-crit">
+      <div class="sn">01</div>
+      <div class="sb">
+        <div class="st">Full System Isolation</div>
+        <div class="sd">Turn key OFF, remove key. Locate the main contactor or fuse link between battery and controller — disconnect it. Wait 5 minutes for controller capacitors to discharge. Verify 0V at controller DC input terminals using a multimeter. If rickshaw has an emergency cutoff switch, engage it.</div>
+      </div>
+      <div class="stag crit">CRITICAL</div>
+    </div>
+
+    <div class="step s-warn">
+      <div class="sn">02</div>
+      <div class="sb">
+        <div class="st">Remove Old Tubular Batteries</div>
+        <div class="sd">Disconnect 4 inter-battery series link cables first. Then disconnect the negative (−) main cable, then positive (+) cable. Remove one battery at a time — each 12V 120Ah tubular weighs ~30kg. Use proper lifting. Do not tilt batteries — acid spill risk. Dispose at certified lead-acid recycling centre. Clean battery tray area with baking soda solution to neutralise any acid residue.</div>
+      </div>
+      <div class="stag warn">ACID HAZARD</div>
+    </div>
+
+    <div class="step s-ok">
+      <div class="sn">03</div>
+      <div class="sb">
+        <div class="st">Prepare Battery Bay for Li-NMC Pack</div>
+        <div class="sd">Li-NMC pack is significantly lighter and smaller. Fabricate or source a mounting tray/bracket that secures the new pack firmly — the pack must NOT shift during vehicle movement. Ensure the pack enclosure is IP54 or better rated for outdoor use. No ventilation required (sealed cells), but avoid placing near direct exhaust heat. Line mounting area with anti-vibration foam padding.</div>
+      </div>
+      <div class="stag ok">MOUNTING</div>
+    </div>
+
+    <div class="step s-crit">
+      <div class="sn">04</div>
+      <div class="sb">
+        <div class="st">Install BMS (If External — Not Built-In)</div>
+        <div class="sd">Mount 48V 150A BMS in a protected location on the frame. Connect cell sense wires S0 to S13 (14 wires) to each cell group junction — follow the BMS manual pin order exactly — wrong pin order will damage BMS instantly. Connect NTC temperature sensors (×3) to cell body surface at positive, middle, and negative ends of the pack. Connect B+ and B− to pack terminals. Do NOT connect P+/P− yet.</div>
+      </div>
+      <div class="stag crit">BMS FIRST</div>
+    </div>
+
+    <div class="step s-crit">
+      <div class="sn">05</div>
+      <div class="sb">
+        <div class="st">Replace Charger — 54.6V Li-NMC Only</div>
+        <div class="sd">The old 48V lead-acid charger charges to 58V and has a bulk/absorb/equalise profile — this WILL overcharge Li-NMC cells and cause thermal runaway. Install a new 54.6V CC-CV Li-NMC charger (charge current 10–20A). Verify charger output voltage with multimeter before connecting to battery: must show 54.6V ± 0.2V at no-load. Never use equalisation mode — Li-NMC has no equalisation stage.</div>
+      </div>
+      <div class="stag crit">CHARGER CRITICAL</div>
+    </div>
+
+    <div class="step s-warn">
+      <div class="sn">06</div>
+      <div class="sb">
+        <div class="st">Reconfigure Motor Controller Settings</div>
+        <div class="sd">Access controller programmer (if available) or set via display: Low voltage cutoff = 39.0V (3.0V/cell × 13). Low voltage warning = 42V. High voltage limit = 54.6V. If controller has battery type selection, set to "Lithium" or "Li-Ion". If regen braking is enabled, ensure regen cutoff voltage = 54.0V (BMS will also cut regen if pack is full). Record all old settings before changing.</div>
+      </div>
+      <div class="stag warn">CONTROLLER</div>
+    </div>
+
+    <div class="step s-ok">
+      <div class="sn">07</div>
+      <div class="sb">
+        <div class="st">Wire DC Main Cables</div>
+        <div class="sd">Install ANL fuse (150A, 60V DC) within 30cm of BMS P+ terminal using a proper ANL fuse holder. Run red 35mm² flexible cable: BMS P+ → ANL fuse → main contactor → motor controller DC+. Run black 35mm² cable: BMS P− → negative bus → motor controller DC−. Also tap off from bus for DC-DC 48V→12V converter for lights and horn. Use tinned copper compression lugs — torque all bolts to 10 Nm. Connect positive LAST.</div>
+      </div>
+      <div class="stag ok">WIRING</div>
+    </div>
+
+    <div class="step s-ok">
+      <div class="sn">08</div>
+      <div class="sb">
+        <div class="st">Chassis Earth Bonding</div>
+        <div class="sd">Connect BMS enclosure, battery pack enclosure, motor controller case, and charger case to the rickshaw steel frame using 6mm² green/yellow cable. All earth connections to a single frame earth point (star connection) — not daisy-chained. This protects against insulation faults creating shock hazard on the vehicle body. Check frame-to-earth continuity &lt;1 ohm with multimeter.</div>
+      </div>
+      <div class="stag ok">EARTH</div>
+    </div>
+
+    <div class="step s-crit">
+      <div class="sn">09</div>
+      <div class="sb">
+        <div class="st">First Power-On & Verification</div>
+        <div class="sd">With charger DISCONNECTED: turn key ON. Controller should power up. Check BMS display shows pack voltage (should be ~48–52V if pack is partially charged). Check all cell voltages on BMS display — all should be within 50mV of each other. Slowly turn throttle — motor should respond smoothly. Check for any fault codes. Then connect charger — verify charging starts at 54.6V max. Monitor temperature for 30 minutes of first charge.</div>
+      </div>
+      <div class="stag crit">VERIFY</div>
+    </div>
+
+    <div class="step s-info">
+      <div class="sn">10</div>
+      <div class="sb">
+        <div class="st">Field Test & Capacity Break-In</div>
+        <div class="sd">Li-NMC cells benefit from 3–5 full charge/discharge cycles to reach rated capacity. Do a 5–10 km test run monitoring: BMS fault LEDs (should be off), motor temperature, controller temperature, and pack voltage under load. Verify regen braking works (if equipped). After first full cycle, check cell balance on BMS — all cells should be within 20mV. If any cell drifts more than 50mV, contact the BMS balancing function.</div>
+      </div>
+      <div class="stag info">COMMISSION</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 5: WIRE SCHEDULE ═══ -->
+<div class="content" id="tab-schedule">
+  <div class="sec">Wire Connection Schedule — E-Rickshaw 48V Li-NMC</div>
+
+  <table class="tbl">
+    <thead>
+      <tr><th class="y">REF</th><th>FROM</th><th>TO</th><th>COLOR</th><th>SIZE</th><th>RATING</th><th>NOTES</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>W01</td><td>Li-NMC Charger DC+</td><td>BMS C+ / B+</td><td><span class="wd" style="background:#ff3333"></span>Red</td><td>10mm²</td><td>60V 20A</td><td>Charge positive to BMS battery side</td></tr>
+      <tr><td>W02</td><td>Li-NMC Charger DC−</td><td>BMS C− / B−</td><td><span class="wd" style="background:#aabcaa"></span>Black</td><td>10mm²</td><td>60V 20A</td><td>Charge negative to BMS battery side</td></tr>
+      <tr><td>W03</td><td>BMS B+</td><td>Pack Positive Terminal</td><td><span class="wd" style="background:#ff3333"></span>Red</td><td>25mm²</td><td>60V 150A</td><td>B-side to cell pack positive</td></tr>
+      <tr><td>W04</td><td>BMS B−</td><td>Pack Negative Terminal</td><td><span class="wd" style="background:#aabcaa"></span>Black</td><td>25mm²</td><td>60V 150A</td><td>B-side to cell pack negative</td></tr>
+      <tr><td>W05</td><td>BMS P+</td><td>ANL Fuse IN</td><td><span class="wd" style="background:#ff3333"></span>Red</td><td>35mm²</td><td>60V 200A</td><td>P-side protected output — fuse ≤30cm</td></tr>
+      <tr><td>W06</td><td>ANL Fuse OUT</td><td>Main Contactor IN</td><td><span class="wd" style="background:#ff3333"></span>Red</td><td>35mm²</td><td>60V 200A</td><td>Fused positive to contactor</td></tr>
+      <tr><td>W07</td><td>Main Contactor OUT</td><td>Controller DC+</td><td><span class="wd" style="background:#ff3333"></span>Red</td><td>35mm²</td><td>60V 150A</td><td>Switched positive to motor controller</td></tr>
+      <tr><td>W08</td><td>BMS P−</td><td>Negative Bus Bar</td><td><span class="wd" style="background:#aabcaa"></span>Black</td><td>35mm²</td><td>60V 200A</td><td>Common negative return</td></tr>
+      <tr><td>W09</td><td>Negative Bus Bar</td><td>Controller DC−</td><td><span class="wd" style="background:#aabcaa"></span>Black</td><td>35mm²</td><td>60V 150A</td><td>Controller negative return</td></tr>
+      <tr><td>W10</td><td>Positive Bus (post fuse)</td><td>DC-DC 48V→12V IN+</td><td><span class="wd" style="background:#ff6b00"></span>Orange</td><td>4mm²</td><td>60V 10A</td><td>48V to auxiliary DC-DC for lights/horn</td></tr>
+      <tr><td>W11</td><td>Negative Bus Bar</td><td>DC-DC 48V→12V IN−</td><td><span class="wd" style="background:#aabcaa"></span>Black</td><td>4mm²</td><td>60V 10A</td><td>DC-DC negative return</td></tr>
+      <tr><td>W12</td><td>DC-DC 12V OUT+</td><td>Lights / Horn / Indicators</td><td><span class="wd" style="background:#ffe033"></span>Yellow</td><td>2.5mm²</td><td>12V 10A</td><td>12V auxiliary loads</td></tr>
+      <tr><td>W13</td><td>Controller U/V/W</td><td>Motor Phase U/V/W</td><td><span class="wd" style="background:#ff3333"></span>Red/<span class="wd" style="background:#39d353"></span>Grn/<span class="wd" style="background:#aabcaa"></span>Blk</td><td>6mm²</td><td>AC 50A</td><td>3-phase motor winding connections</td></tr>
+      <tr><td>W14</td><td>Pack S0–S13 junctions</td><td>BMS Cell Sense Pins</td><td><span class="wd" style="background:#ffe033"></span>Yellow</td><td>0.5mm²</td><td>Signal</td><td>14-wire cell voltage sense ribbon</td></tr>
+      <tr><td>W15</td><td>Cell surface (×3)</td><td>BMS T1/T2/T3</td><td><span class="wd" style="background:#ff6b00"></span>Orange</td><td>0.5mm²</td><td>Signal</td><td>NTC 10kΩ temperature sensors</td></tr>
+      <tr><td>W16</td><td>BMS UART/CAN TX/RX</td><td>SOC Display</td><td><span class="wd" style="background:#00d4ff"></span>Teal</td><td>0.5mm²</td><td>Signal</td><td>SOC%, cell V, fault to dashboard</td></tr>
+      <tr><td>W17</td><td>Hall Sensor (Motor)</td><td>Controller Hall Input</td><td><span class="wd" style="background:#00d4ff"></span>Teal</td><td>0.5mm²</td><td>Signal 5V</td><td>3-wire Hall: 5V, GND, Signal</td></tr>
+      <tr><td>W18</td><td>Throttle</td><td>Controller Throttle IN</td><td><span class="wd" style="background:#00d4ff"></span>Teal</td><td>0.5mm²</td><td>Signal 0–5V</td><td>Speed control signal</td></tr>
+      <tr><td>W19</td><td>BMS Chassis / Enclosure</td><td>Frame Earth Point</td><td><span class="wd" style="background:#39d353"></span>Green</td><td>6mm²</td><td>Earth</td><td>BMS + pack enclosure chassis bond</td></tr>
+      <tr><td>W20</td><td>Controller Case</td><td>Frame Earth Point</td><td><span class="wd" style="background:#39d353"></span>Green</td><td>6mm²</td><td>Earth</td><td>Controller chassis bonding</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec" style="margin-top:20px">Component Specification</div>
+  <table class="tbl">
+    <thead><tr><th class="y">COMPONENT</th><th>SPECIFICATION</th><th>QTY</th><th>REMARK</th></tr></thead>
+    <tbody>
+      <tr><td>Li-NMC PACK</td><td>48V 120Ah · 13S4P · Prismatic · IP54 enclosure</td><td>1 no</td><td><span class="badge acc">Main Storage</span></td></tr>
+      <tr><td>BMS</td><td>48V 150A · 13S · OVP/UVP/OCP/SCP/OTP · UART</td><td>1 no</td><td><span class="badge danger">Mandatory</span></td></tr>
+      <tr><td>Li-NMC CHARGER</td><td>54.6V · 10–20A CC-CV · No equalize</td><td>1 no</td><td><span class="badge danger">Replace old charger</span></td></tr>
+      <tr><td>ANL FUSE + HOLDER</td><td>150A · 60V DC · Blade ANL</td><td>1 no</td><td><span class="badge danger">≤30cm from P+</span></td></tr>
+      <tr><td>MAIN CONTACTOR</td><td>48V DC · 150A · Key-switched</td><td>1 no</td><td><span class="badge warn">If not existing</span></td></tr>
+      <tr><td>DC-DC CONVERTER</td><td>48V → 12V · 10A · 120W isolated</td><td>1 no</td><td><span class="badge info">Lights/Horn</span></td></tr>
+      <tr><td>MAIN CABLE (DC)</td><td>35mm² flexible copper · Red + Black</td><td>3–5 m each</td><td><span class="badge ok">Main power runs</span></td></tr>
+      <tr><td>CHARGE CABLE</td><td>10mm² flexible copper · Red + Black</td><td>1–2 m</td><td><span class="badge ok">Charger to BMS</span></td></tr>
+      <tr><td>CABLE LUGS</td><td>M8/M10 compression · tinned copper</td><td>16–20 nos</td><td><span class="badge ok">All DC terminals</span></td></tr>
+      <tr><td>CELL SENSE RIBBON</td><td>14-core 0.5mm² · 60V · with BMS connector</td><td>1 set</td><td><span class="badge info">Supplied with BMS</span></td></tr>
+      <tr><td>NTC SENSORS</td><td>10kΩ NTC · adhesive pad · 3-wire</td><td>3 nos</td><td><span class="badge ok">Cell temp monitor</span></td></tr>
+      <tr><td>SOC DISPLAY</td><td>48V Li-Ion BMS display · UART/CAN · waterproof</td><td>1 no</td><td><span class="badge info">Dashboard mount</span></td></tr>
+      <tr><td>MOUNTING BRACKET</td><td>Mild steel · powder coated · with anti-vibe foam</td><td>1 set</td><td><span class="badge warn">Custom fabricate</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FOOTER -->
+<div class="foot">
+  <span>STANDARD: IS 17017 · IEC 62619</span>
+  <span>E-RICKSHAW 48V TUBULAR → Li-NMC REPLACEMENT · DWG-ERS-003</span>
+  <span>NOT TO SCALE · ALL VOLTAGES DC UNLESS NOTED</span>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
